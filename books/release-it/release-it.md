@@ -3,7 +3,8 @@
 
 *by Michael T. Nygard*
 
-## Chapter 1: Living in Production
+## Chapter 1: 
+## Living in Production
 ---
 Does “feature complete” mean “production ready”? 
 
@@ -141,3 +142,46 @@ One way to prepare for every possible failure is to look at every external call,
 Over time, however, patterns of failure do emerge. A certain brittleness along an axis, a tendency for this problem to amplify that way. These are the stability ***antipatterns***.
 
 ***Patterns*** stop cracks from propagating. 
+
+## Chapter 4: 
+## Stability Antipatterns
+
+Billons of users and boundaries of our applications have become fuzzy as more features are delegated to SaaS services.
+
+The ***technology frontier*** is where the twin specters of high interactive complexity and tight coupling conspire to turn rapidly moving cracks into full-blown failures.
+
+***High interactive complexity*** arises when systems have enough moving parts and hidden, internal dependencies that most operators’ **mental models** are either incomplete or just plain wrong. With the best of intentions, the developer can take an action based on his or her own mental model of how the system functions that triggers a completely unexpected linkage. Such linkages con- tribute to *****problem inflation*** turning a minor fault into a major failure. 
+
+***Tight coupling*** allows cracks in one part of the system to propagate themselves —or multiply themselves—across layer or system boundaries
+
+Simply avoiding antipatterns isn’t sufficient, though. Everything breaks. Faults are unavoidable.
+
+## Integration Points
+A ***butterfly*** (a.k.a monolith) has a central system with a lot of feeds and connections fanning into it on one side and a large fan out on the other side
+![butterfly](./assets/butterfly.png)
+
+A ***spiderweb***, with many boxes and dependencies, with calls
+through tiers or simply chaos, any service calling each other. 
+![spiderweb](./assets/spiderweb.png)
+
+The more we move toward a large number of smaller services, the more we integrate with SaaS providers, and the more we go API first, the worse this is going to get
+
+Integration points are the number-one killer of systems. Every socket, process, pipe, or remote procedure call can and will hang.
+
+## Socket-Based Protocols
+The calling system must deal with connection failures. But it can take a long time to discover that you can’t connect.
+
+Supose the remote application's queue is listening to the port but is absolutely hammered with connection requests, until it can no longer service the incoming connections. The calling application’s thread could be blocked waiting for the remote server to respond for several minutes! (open() is blocked for every thread)
+
+The same thing happens when the caller can connect and send its request but the server takes a long time to read the request and send a response. (read() call gets blocked).
+
+*Connection Refused* is a fast failure but  Slow failures, such as a dropped ACK, let threads block for minutes before throwing exceptions. **The blocked thread can’t process other transactions**. If all threads end up getting blocked, then for all practical purposes, the server is down. Clearly, a **slow response is a lot worse than no response**.
+
+## The 5 A.M. Problem
+Abstractions provide great conciseness of expression. We can go much faster when we talk about fetching a document from a URL than if we have to discuss the tedious details of connection setup, packet framing, acknowledgments, receive windows, and so on. 
+
+A network “connection” is a logical construct—an abstraction—in its own right. All you will ever see on the network itself are packets. (Of course, a “packet” is an abstraction, too.
+
+Not every problem can be solved at the level of abstraction where it manifests. Sometimes the causes reverberate up and down the layers. You need to know how to drill through at least two layers of abstraction to find the “reality” at that level in order to understand problems.
+
+## HTTP Protocols

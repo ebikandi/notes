@@ -185,3 +185,109 @@ A network “connection” is a logical construct—an abstraction—in its own 
 Not every problem can be solved at the level of abstraction where it manifests. Sometimes the causes reverberate up and down the layers. You need to know how to drill through at least two layers of abstraction to find the “reality” at that level in order to understand problems.
 
 ## HTTP Protocols
+HTTP-based protocols use sockets, so they are vulnerable to all of the problems described previously. Some of the ways that such an integration point can harm the caller:
+- The provider may accept the TCP connection but never respond to the HTTP request.
+- The provider may accept the connection but not read the request, causing caller's write buffer to block.
+- The provider may send back a response status the caller doesn’t know how to handle.
+- The provider may send back a response with a content type the caller doesn’t expect or know how to handle.
+- The provider may claim to be sending some format but sending another.
+
+Suggestion, treat a response as data until you’ve confirmed it meets your expectations.
+
+## Vendor API Libraries
+ You have so little control over them. We can’t tell what the execution context will be just by looking at the code.
+
+ ## Countering Integration Point Problems
+ The most effective stability patterns to combat integration point failures are **Circuit Breaker** and **Decoupling Middleware**. Testing helps, too. To make sure your software is cynical enough, you should make a **test harness** for each integration test:
+- Canned respones for functional testing.
+- Isolation.
+- Simulate various kinds of system and network failures.
+
+To test for stability, you also need to flip all the switches on the harness while the system is under considerable load
+
+### Remember This
+- **Beware this necessary evil.** Every integration point will eventually fail in some way, and you need to be prepared for that failure.
+- **Prepare for the many forms of failure.** You will not get nice error responses delivered through the defined protocol; instead, you’ll see some kind of protocol violation, slow response, or outright hang.
+- **Know when to open up abstractions.** Debugging integration point failures usually requires peeling back a layer of abstraction.
+- **Failures propagate quickly.**
+- **Apply patterns to avert integration point problems.** Defensive programming via Circuit Breaker, Timeouts, Decoupling Middleware and Handshaking.
+
+## Chain Reactions
+*Horizontal* scaling means we add capacity by adding more servers (a.k.a *farms*). *Vertical* scaling, means building bigger and bigger servers (adding core, memory, ...). 
+
+In horizontal architecture, the multiplicity of machines provides you with fault tolerance through redundancy. But horizontal clusters are not susceptible to single points of failure. When one node in a load-balanced group fails, the other nodes must pick up the slack. If the first server failed because of some load-related condition, such as a memory leak or intermittent race condition, the surviving nodes become more likely to fail.
+
+A chain reaction occurs when an application has some defect. That means the only way you can eliminate the chain reaction is to fix the underlying defect.
+
+Chain reactions are sometimes caused by blocked threads.
+
+### Remember This
+- **Recognize that one server down jeopardizes the rest.**
+- **Hunt for resource leaks.** Most of the time, a chain reaction happens when your application has a memory leak.
+- **Hunt for obscure timing bugs.** Race conditions.
+- **Use Autoscaling.** In the cloud using health-checks.
+- Prevent chain reactions **partitioning servers with Bulkheads.**
+
+## Cascading Failures
+A cascading failure occurs when a crack in one layer triggers a crack in a calling layer. Every dependency is a chance for a failure to cascade. Crucial services with many callers—spread their problems widely. 
+
+The failure “jumps the gap” between services when bad behavior in the calling layer gets triggered by the failure condition in the provider.
+
+The layer-jumping mechanism often takes the form of failing threads (blocked or overly aggressive). Speculative retries also allow failures to jump the gap.
+
+Preventing cascading failures is the very key to resilience. The most effective patterns to combat cascading failures are **Circuit Breaker** (for aggressive threads) and **Timeouts** (for blocked threads).
+
+## Users
+Users do present numerous risks to stability.
+
+### Traffic
+As traffic grows, it will eventually surpass your capacity. “Capacity” is the maximum throughput your system can sustain under a given workload while maintaining acceptable performance. 
+
+### Heap Memory
+One such hard limit is memory available. When memory gets short, a large number of surprising things can happen. If things are really bad, the logging system might not even be able to log the error. A supposedly recoverable low-memory situation will rapidly turn into a serious stability problem.
+
+**Weak references** are a way to keep things in memory when memory is plentiful but automatically be more frugal when memory is tight. Weakly reachable objects will be reclaimed before an out-of-memory error occurs. Anyway, they do add complexity. So when you can, it’s best to just keep things out of the session.
+
+### Off-Heap Memory, Off-Host Memory
+Instead of keeping the session inside the heap, move it out to some other process. 
+
+Redis is another popular tool for moving memory out of your process. It’s a fast “data structure server” that lives in a space between cache and database.
+
+Anyway, local memory is still faster than remote memory. There’s no one-size-fits-all answer.
+
+### Sockets
+Every active request corresponds to an open socket. If there are only 64,511 ports available for connections, how can a server have a million connections? The secret is virtual IP addresses. Plan to spend some time learning about your operating system’s TCP tuning parameters.
+
+### Closed Sockets
+Not only can open sockets be a problem, but the ones you’ve already closed can bite you too. A *bogon* is a wandering packet that got routed inefficiently and arrives late, possibly out of sequence, and after the connection is closed.  If the socket were reused too quickly, then a bogon could arrive with the exact right com- bination of IP address, destination port number, and TCP sequence number to be accepted as legitimate data for the new connection. 
+
+### Expensive to Serve
+Expensive users are not a direct stability risk, but the increased stress they produce increases the likelihood of triggering cracks elsewhere in the system
+
+The best thing you can do about expensive users is test aggressively. Identify whatever your most expensive transactions are and double or triple the proportion of those transactions.
+
+Build the system to handle nothing but the most expensive trans- actions and you will spend ten times too much on hardware.
+
+### Unwanted Users
+We would all sleep easier if the only users to worry about were the ones handing us their credit card numbers. Some aren’t deliberately malicious; but there are others that do it on purpose.
+
+Keeping out legitimate robots is fairly easy through the use of the robots.txt file. In the worst case, the site sends the agent into a dead end. The robots most likely to respect robots.txt are the ones that might actually generate traffic (and revenue) for you, while the leeches ignore it completely.
+
+Once you identify a screen scraper, block it from your network (using CDN, firewalls, ...).
+
+### Malicious Users
+This gets into deep waters with respect to law enforcement and forensic evidence.
+
+The primary risk to stability is the now-classic distributed denial-of-service (DDoS) attack. The load typically comes from a botnet.
+
+Network vendors all have products that detect and mitigate DDoS attacks. Proper configuring and monitoring of these products is essential. It’s best to run these in “learning” or “baseline” mode for at least a month to understand what your normal, cyclic traffic patterns are.
+
+### Remember This
+- **Users consume memory.** Each user’s session requires some memory. Minimize that memory to improve your capacity. 
+- **Users do weird, random things.** Users in the real world do things that you won’t predict. If there’s a weak spot in your application, they’ll find it through sheer numbers. 
+- **Malicious users are out there.** Become intimate with your network design; Make sure your systems are easy to patch.
+- **Users will gang up on you.** Run special stress tests to hammer deep links or hot URLs. Watch out for huge loads.
+
+
+
+

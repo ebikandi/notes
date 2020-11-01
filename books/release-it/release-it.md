@@ -288,6 +288,39 @@ Network vendors all have products that detect and mitigate DDoS attacks. Proper 
 - **Malicious users are out there.** Become intimate with your network design; Make sure your systems are easy to patch.
 - **Users will gang up on you.** Run special stress tests to hammer deep links or hot URLs. Watch out for huge loads.
 
+## Blocked Threads
+The process runs and runs but does nothing because every thread available for processing transactions is blocked waiting on some impossible outcome.
+ - “the system crashed" VS “the system is hung.”
 
+Only one observable variable really matters, **whether the system is able to process transactions or not.**. The simple fact that the server process is running doesn’t help the user get work done
 
+Usefull monitoring:
+- A mock client running synthetic transactions on a regular basis.
+- Metrics (succesful logins, failed credit cards, ...).
+  
+It’s very, very hard to find hangs during development
+
+Avoid synchronization on domain objects making your domain objects immutable and using CQRS.
+
+### Use Caching, Carefully
+The maximum **memory usage** of all application-level caches should be **configurable**. By consuming memory needed for other tasks, the cache will actually cause a serious slowdown.
+
+**Monitor hit rates for the cached items** to see whether most items are being used from cache. If a particular cached object is used only once during the lifetime of a server, then caching it is of no help.
+
+Is wise to avoid caching things that are cheap to generate.
+
+Caches that use **weak references** will help the garbage collector reclaim memory instead of preventing it.
+
+### Libraries
+
+Libraries are notorious sources of blocking threads which usually never allow you to configure their failure modes.
+
+### Remember This
+- The Blocked Threads antipattern leads to Chain Reactions and Cascading Failures antipatterns.
+- A deadlock in the database can cause connections to be lost forever, blocking the thread.
+- Any library of concurrency utilities has more testing than your newborn queue.
+- Defend with Timeouts.
+- Beware the code you cannot see. Prefer open source libraries to closed source, to invesitgate its guts and test it.
+
+## Self-Denial Attacks
 

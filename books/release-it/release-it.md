@@ -324,3 +324,58 @@ Libraries are notorious sources of blocking threads which usually never allow yo
 
 ## Self-Denial Attacks
 
+A **self- denial attack** describes any situation in which the system—or the extended system that includes humans—conspires against itself. For example, thousands of requests, origined by an special offer, made against single node acting as a bottleneck.
+
+### Avoiding Self-Denial
+
+You can avoid machine-induced self-denial by building a “**shared-nothing**” architecture (when each server can run without knowing anything about any other server). Where that’s impractical, apply decoupling middleware to reduce the impact of excessive demand, or make the shared resource itself horizontally scalable.
+
+Autoscaling can help when the traffic surge does arrive, but watch out for the lag time. “Pre-autoscale” by upping the configuration before the marketing event goes out.
+
+### Rememeber this
+
+- Keep the lines of communication open.
+- Protect/scale shared resources.
+- Expect rapid redistribution of any cool or valuable offer.
+
+## Scaling Effects
+Anytime you have a “many-to-one” or “many-to-few” relationship, you can be hit by scaling effects when one side increases.
+
+### Point-to-Point Communications
+With point-to-point connections, each instance has to talk directly to every other instance. It probably works just fine when only one or two instances are communicating.
+
+The total number of connections goes up as the square of the number of instances. Scale that up to a hundred instances, and the O(n^2) scaling becomes quite painful.
+
+**Distinguish** between point-to-point **inside a service** versus point-to-point **between services**. 
+
+As the number of servers grows, then a different communication strategy is needed:
+- UDP broadcasts (bandwith inefficient, because sending to everybody).
+  
+- TCP or UDP multicast (more efficient, as the sender chooses where to send).
+  
+- Publish/subscribe messaging (better, since a server can pick up a message even if it wasn’t listening at the precise moment the message was sent. Higher infrastructure cost)
+  
+- Message queues
+
+### Shared Resources
+
+Shared resource is some facility that all members of a horizontally scalable layer need to use. When the shared resource gets overloaded, it’ll become a **bottleneck** limiting capacity
+
+### Remember This
+- Examine production versus QA environments to spot Scaling Effects.
+- Watch out for point-to-point communication.
+- Watch out for shared resources.
+
+## Unbalanced Capacities
+One system can overwhelm another if their capacities are not balanced. But id might be impractical to evenly match capacity in each system for a lot of reasons. You must build both callers and providers to be resilient in the face of a tsunami of requests instead.
+- For the caller, Circuit Breaker can work.
+- For service providers, use Handshaking and Backpressure to inform callers to throttle back on the requests. Also consider Bulkheads to reserve capacity for high-priority callers of critical services.
+
+### Drive Out Through Testing
+Unbalanced capacities are another problem rarely observed during QA. You can apply a **test harness** mimicking a back-end system wilting under load to verify that your front-end system **degrades gracefully**.
+
+- Use capacity modeling to make sure you’re at least in the ballpark.
+- Don’t just test your system with your usual workloads. Double your usual load and direct it all against your most expensive transaction.
+- Use autoscaling to react to surging demand (watch out with costs).
+
+## Dogpile

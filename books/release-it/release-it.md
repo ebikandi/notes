@@ -85,6 +85,7 @@ The worst problem here is that the bug in one system could propagate to all the 
 
 ## Chapter 3:
 ## Stabilize Your System
+---
 Enterprise software must expects bad things to happen and is never surprised when they do. Doesn’t even trust itself. It refuses to get too intimate with other systems.
 
 Poor stability carries significant real costs (lost revenue, bad reputation, ...). Decision points have high leverage over the system’s ultimate stability.
@@ -145,7 +146,7 @@ Over time, however, patterns of failure do emerge. A certain brittleness along a
 
 ## Chapter 4: 
 ## Stability Antipatterns
-
+---
 Billons of users and boundaries of our applications have become fuzzy as more features are delegated to SaaS services.
 
 The ***technology frontier*** is where the twin specters of high interactive complexity and tight coupling conspire to turn rapidly moving cracks into full-blown failures.
@@ -379,3 +380,61 @@ Unbalanced capacities are another problem rarely observed during QA. You can app
 - Use autoscaling to react to surging demand (watch out with costs).
 
 ## Dogpile
+After recovering from a shutdown, we have to take care, because another overload when the "power" is still low gut trigger another shutdown.
+
+Startup power needs can be higher than the usual steady load. When a bunch of servers impose this transient load all at once, it’s called a dogpile It can happen:
+- When booting up several servers, such as after a code upgrade and restart.
+- When a cron job triggers at midnight (or on the hour for any hour, really).
+- When the configuration management system pushes out a change.
+
+Prevent dogpiles configuring a randomized “slew” that will cause servers to pull changes at slightly different times. Look out for any place where many threads can get blocked waiting for one thread to complete.
+
+### Remember This
+- Dogpiles force you to spend too much to handle peak demand..
+- Use random clock slew to diffuse the demand.
+- Use increasing backoff times to avoid pulsing.
+
+## Force Multiplier
+Automation allows administrators to make large movements with less effort. It’s a force multiplier.
+
+### Outage Amplification
+
+For example, a service is responsible for starting and stopping machine instances. If it forms a belief that everything is down, then it would necessarily start a new copy of every single service required to run the enterprise.
+
+### Controls and Safeguards
+
+ Limiting capabalities when the system is not operating in a “normal” condition.
+ - If observations report that more than 80 percent of the system is unavailable, it’s more likely to be a problem with the observer than the system.
+ - Apply **hysteresis**. Start machines quickly, but shut them down slowly.
+ - Systems that consume resources should be stateful enough to detect if they’re trying to spin up infinity instances.
+ - Build in deceleration zones to account for momentum. Suppose your control plane senses excess load every second, but it takes five minutes to start a virtual machine to handle the load. It must make sure not to start 300 virtual machines because the high load persists
+
+### Remember This
+- Build limiters and safeguards into infrastructure management tools so they won’t destroy your whole system at once.
+- Actions initiated by automation take time. That time is usually longer than a monitoring interval, so make sure to account for some delay in the system’s response to the action.
+  
+## Slow Responses
+Generating a slow response is worse than refusing a connection or returning an error. Slow responses usually result from excessive demand. 
+
+Slow responses tend to propagate upward from layer to layer in a gradual form of cascading failure.
+
+The system should have the ability to monitor its own performance, so it can also tell when it isn’t meeting its service-level agreement.
+
+### Remember This
+- Slow Responses trigger Cascading Failures.
+- For websites, Slow Responses cause more traffic. (users reloading the page when the response is slow).
+- Consider Fail Fast.
+- Hunt for memory leaks or resource contention.
+
+## Unbounded Result Sets
+Ask, “What can system X do to hurt me?” and then design a way to dodge whatever wrench your supposed ally throws.
+
+### Remember this
+- Use production-sized data sets for testing.
+- Paginate at the front end.
+- Don’t rely on the data producers.
+- Put limits into other application-level protocols which can return to huge data collections, consuming too much memory.
+
+## Chapter 5:
+## Stability Patterns
+---

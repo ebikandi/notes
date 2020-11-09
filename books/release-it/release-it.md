@@ -438,3 +438,49 @@ Ask, “What can system X do to hurt me?” and then design a way to dodge whate
 ## Chapter 5:
 ## Stability Patterns
 ---
+Expect failures. Apply these patterns wisely to reduce the damage done by an individual failure.
+## Timeouts
+Even if you’ve already established communication, any the elements of the connection could break at any time.When that happens, your code can’t just wait forever for a response that might never come. **Stop waiting for an answer once you think it won’t come.** 
+
+Timeouts can provide **fault isolation** (a problem in some other service or device does not have to become your problem).
+
+Timeouts can also be relevant **within a single service**. Any resource pool can be exhausted blocking the thread. So, the caller thread needs to have a timeout.
+
+Use a **generic gateway** to provide the template for connection handling. Talking about **retries**, if the operation failed because of any significant problem, it’s likely to fail again if retried immediately. Thus, fast retries are very likely to fail again.
+
+**Queuing** the work for a slow retry later is a good thing. In the case of failure in a remote server, **queue-and-retry** ensures that once the remote server is healthy again.
+
+A **circuit breaker** can tabulate timeouts, tripping to the “off” state if too many occur. The **Timeouts** pattern is useful when you need to protect your system from **someone else**’s failure. **Fail Fast** is useful when you need to report why you won’t be able to process some transaction in an **incoming request**.
+
+### Remember This
+- Apply Timeouts to Integration Points, Blocked Threads, and Slow Responses.
+- Apply Timeouts to recover from unexpected failures.
+- Consider delayed retries.
+  
+## Circuit Breaker
+The circuit breaker exists to allow one subsystem to fail without destroying the entire system. oOce the danger has passed, the circuit breaker can be reset to restore full function to the system. **Prevent operations rather than reexecute them.**
+
+In the normal **“closed”** state, the circuit breaker executes operations as usual. If an operation fails, it makes a note on the failure. Once the number/frequency of failures exceeds a threshold (different thresholds can be configured for different errors), the circuit breaker trips and **“opens”** the circuit, calling to the circuit breaker fail immediately. After a suitable amount of time, the circuit breaker decides that the operation has a chance of succeeding, so it goes into the “**half-open**” state. In this state, the **next call to the circuit breaker is allowed** to execute the dangerous operation. If it **succeeds**, the circuit breaker resets and **returns to the “closed”** state, ready for more routine operation. If this trial call **fails**, however, the circuit breaker **returns to the open** state until another timeout elapses.
+
+When open, the simplest approach can be to fail all the calls (maybe throwing exceptions). But a circuit breaker may also have a **“fallback”** strategy (involve the **stakeholder** when defining):
+  - Return the last good response.
+  - Return a generic answer.
+  - Call a secondary service until the first is available.
+  - ...
+
+To calculate ***fault density*** **increment** every time you observe a fault but with a timer **decrement**, the counter periodically to zero. If the count exceeds a threshold, then you know that **faults are arriving quickly**.
+
+Changes in a circuit breaker’s state should always be **logged**, and the **current state should be exposed** for querying and **monitoring**. The frequency of state changes s a leading indicator of problems somewhere. Also a convenient place to gather **metrics** about call volumes and **response times.**
+
+ Sharing the circuit breaker state introduces another out-of-process communication. That means the safety mechanism would introduce a new failure mode! Circuit breakers are subject to the gallery of **multithreaded** programming terrors.
+
+ ### Remember This
+ - When there’s a difficulty with Integration Points, stop calling it!
+ - Circuit Breaker is good at avoiding calls when Integration Points has a problem. The **Timeouts** pattern indicates that there’s a problem in Integration Points.
+ - Expose, track, and report state changes.
+
+## Bulkheads
+  
+
+
+

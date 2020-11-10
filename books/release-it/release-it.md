@@ -480,7 +480,42 @@ Changes in a circuit breaker’s state should always be **logged**, and the **cu
  - Expose, track, and report state changes.
 
 ## Bulkheads
-  
+Principle of **damage containment**. Partition your systems to keep a failure in one part of the system from destroying everything.
 
+ **Physical redundancy** with multiple independent servers, then a hardware failure in one can’t affect the others. 
+Redundant virtual machines are not quite as robust as redundant physical machines, because more than one VM may end up running on the same physical box
 
+**Identify the natural boundaries** that let you partition the system in a way that is both technically feasible and financially beneficial.
+
+Bulkheads do not need to be permanent. Dynamic partitions can be made and destroyed as traffic patterns change.
+
+At smaller scales, process binding is an example of partitioning via bulkheads. Binding a process to a core or group of cores ensures that the operating system schedules that process’s threads only on the designated core or cores. If a process goes berserk and starts using all CPU cycles, it can usually drag down an entire host machine. If that process is bound to a core, however, it can use all available cycles only on that one core. Partition the threads inside a single process, with separate thread groups **dedicated to different functions**.
+
+### Remember This
+- Preserve partial functional- ity when bad things happen.
+- Pick a useful granularity (inside an application, CPUs in a server, or servers in a cluster).
+- Consider Bulkheads particularly with shared services models to prevent chain reactions.
+
+## Steady State
+Every single time a human touches a server is an opportunity for unforced errors. It’s best to keep people off production systems to the greatest extent possible. Systems should be **catle** (just mantaining) instead of **pets** (totally dependant and need a lot of cares).
+
+A microservice being continuously deployed from version control should be pretty easy to stabilize for a release cycle.
+
+**The Steady State pattern says that for every mechanism that accumulates a resource, some other mechanism must recycle that resource.** (clean log files, ...)
+
+## Data Purging
+Delete old data to keep the system light.
+- Watch out for referential data. Some object may be dependat of the tupke you just removed.
+- Ensure that the application keeps running as expected once the data is removed (tests are useful).
+
+## Log Files
+Unchecked log files on individual machines are a risk. When log files fill up the filesystem, they jeopardize stability.
+- Separate the logginf filesystem from any critical data storage.
+- Make the application code protects itself well enough that users never realize anything is amiss.
+
+**Avoid filling up the filesystem**. Make sure that all log files will get rotated out and eventually purged. 
+
+Compliance regimes require you to retain logs for years. Get logs off of production machines as quickly as possible. Ship the log files to a centralized logging server, such as Logstash, where they can be indexed, searched, and monitored.
+
+## In-Memory Caching
 

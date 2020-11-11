@@ -519,3 +519,32 @@ Compliance regimes require you to retain logs for years. Get logs off of product
 
 ## In-Memory Caching
 
+Cache, left untended, will suck up the memory. Ask two questions:
+- Is the space of possible keys finite or infinite?
+- Do the cached items ever change?
+
+Cache needs some form of cache invalidation, such as a periodic flush.
+
+### Remember This
+- Human intervention leads to problems.
+- Purge data with application logic.
+- Limit caching.
+- Don’t keep an unlimited amount of log files.
+
+## Fail Fast
+Can there be any bigger waste of system resources than burning cycles and clock time only to throw away the result? If the system can **determine in advance that it will fail** at an operation, it’s always better to fail fast. 
+
+Simple detection is **“resource unavailable”** failures:
+- Load balancer gets a connection request but not one of the servers in its service pool is functioning, **refuse** the connection.
+- The service can quickly **check out the connections** it will need and **verify the state of the circuit breakers** around the integration points.
+
+Another way is **perform basic parameter-checking** before talkng to the database.
+
+Even when failing fast, be sure to **report a system failure** differently than an application failure. Reporting a generic “error” message may cause an upstream system to trip a circuit breaker just because some user entered bad data and hit Reload three or four times.
+
+### Remember This
+- Avoid Slow Responses and Fail Fast.
+- Reserve resources, verify Integration Points early. **Don’t do useless work**.
+- Do basic user input validation even before you reserve resources
+
+## Let It Crash

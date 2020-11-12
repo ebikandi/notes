@@ -492,7 +492,7 @@ Bulkheads do not need to be permanent. Dynamic partitions can be made and destro
 At smaller scales, process binding is an example of partitioning via bulkheads. Binding a process to a core or group of cores ensures that the operating system schedules that process’s threads only on the designated core or cores. If a process goes berserk and starts using all CPU cycles, it can usually drag down an entire host machine. If that process is bound to a core, however, it can use all available cycles only on that one core. Partition the threads inside a single process, with separate thread groups **dedicated to different functions**.
 
 ### Remember This
-- Preserve partial functional- ity when bad things happen.
+- Preserve partial functionality when bad things happen.
 - Pick a useful granularity (inside an application, CPUs in a server, or servers in a cluster).
 - Consider Bulkheads particularly with shared services models to prevent chain reactions.
 

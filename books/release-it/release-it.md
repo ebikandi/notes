@@ -505,12 +505,12 @@ A microservice being continuously deployed from version control should be pretty
 
 ## Data Purging
 Delete old data to keep the system light.
-- Watch out for referential data. Some object may be dependat of the tupke you just removed.
+- Watch out for referential data. Some object may be dependat of the tuple you just removed.
 - Ensure that the application keeps running as expected once the data is removed (tests are useful).
 
 ## Log Files
 Unchecked log files on individual machines are a risk. When log files fill up the filesystem, they jeopardize stability.
-- Separate the logginf filesystem from any critical data storage.
+- Separate the logging filesystem from any critical data storage.
 - Make the application code protects itself well enough that users never realize anything is amiss.
 
 **Avoid filling up the filesystem**. Make sure that all log files will get rotated out and eventually purged. 
@@ -548,3 +548,60 @@ Even when failing fast, be sure to **report a system failure** differently than 
 - Do basic user input validation even before you reserve resources
 
 ## Let It Crash
+We must assume that errors will happen, but, **what do we do with the error?** Error recovery is difficult and unreliable, so our goal should be to get back to that clean startup as rapidly as possible.
+
+### Limited Granularity
+We want to **crash a component in isolation**. The **rest of the system must protect itself from a cascading failure**.
+
+### Fast Replacement
+Get back into that clean state and resume normal operation as quickly as possible.  Beware of how much of the “stack” has to be started up. When startup time is **measured in minutes. “Let it crash” is not the right strategy**,
+
+### Supervision
+what happens when the problem persists across restarts? Use a hierarchical tree of supervisors to manage the restarts. When something terminates, make the runtime notify its supervisor. The supervisor can choose to restart the child or terminate itself if most the children are terminated. In that case, supervisor's supervisor will be notified. And on and on.
+
+- The **supervisor is not the service consumer**. 
+- Keep close track of **how often** they restart child processes.
+
+### Reintegration
+After an actor or instance crashes and the supervisor restarts it, the system must resume calling the newly restored provider. If the instance was called directly, then callers should have **circuit breakers** to automatically reintegrate the instance.
+
+### Remember This
+- Crash components to save systems.
+- Restart fast and reintegrate.
+- Isolate components to crash independently.
+- Don’t crash monoliths, as they's need to much time/resources to restart.
+
+## Handshaking
+Signaling between devices that regulate communication between them. Letting the server **protect itself by throttling its own workload**, it should have a way to reject incoming work. 
+
+Provide a “health check” query for use by load balancers. The load balancer would then check the health of the server before directing a request to that instance.
+
+### Remember This
+- Create cooperative demand control.
+- Consider health checks.
+- Build handshaking into your own low-level protocols.
+
+## Test Harnesses
+Distributed systems have failure modes that are difficult to provoke in development or QA environments. Integration test environments can verify only what the system does when its dependencies are working correctly.
+
+A **better** approach to integration testing would allow you to test most or all of these failure modes. A good [test harness](https://en.wikipedia.org/wiki/Test_harness) should be devious. It should be as nasty and vicious as real-world systems will be.
+
+### Why Not Mock Objects?
+ >A mock object improves the isolation of a unit test by cutting off all the external connections. Mock objects are often used at the boundaries between layers.
+
+ 
+A test harness differs from mock objects in that a mock object can only be trained to produce behavior that conforms to the defined interface. A test harness runs as a separate server, so it’s not obliged to conform to any interface.  
+
+A test harness “knows” that it’s meant for testing; it has no other role to play. Although the real application wouldn’t be written to call the low-level network APIs directly, the test harness can be. Therefore, it’s able to send bytes too quickly, or very slowly, ... It can behave in any way.
+
+It’s not a bad idea to have the test harness log requests, in case your application dies without so much as a whimper to indicate what killed it.
+
+### Remember This
+- Emulate out-of-spec failures.
+- Stress the caller.
+- Leverage shared harnesses for common failures.
+- Supplement, don’t replace, other testing methods.
+
+## Decoupling Middleware
+
+

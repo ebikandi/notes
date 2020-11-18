@@ -603,5 +603,45 @@ It’s not a bad idea to have the test harness log requests, in case your applic
 - Supplement, don’t replace, other testing methods.
 
 ## Decoupling Middleware
+Middleware simultaneously integrates and decouples systems. Any kind of synchronous call-and-response or request/reply method forces the calling system to stop what it’s doing and wait. Less tightly coupled forms of middleware allow the calling and receiving systems to **process messages (Message Queues) in different places and at different times**, because the requesting system doesn’t just sit around waiting for a reply, this form of middleware cannot produce a cascading failure.
 
+Designing asynchronous processes is **inherently harder**. The process must deal with exception queues, late responses, callbacks, ...
 
+### Remember This
+- Decide at the last responsible moment. "Cheaper" stability patterns can be implemented without large-scale changes to the design or architecture.
+- The more fully you decouple individual servers, layers, and applications, the fewer problems you will observe between parts.
+- Learn many architectures, and choose among them.
+
+## Shed Load
+The world can always make more load than you can handle. When load gets too high (when requests take longer than the SLA, it’s time to shed some load.), start to refuse new requests for work (related to Fail Fast).
+
+When a load balancer is in the picture, individual instances can use a 503 status code on their health check pages to tell the load balancer to back off for a while.
+
+### Remember This
+- The world has more people and devices than you can support.
+- Avoid slow responses using Shed Load.
+- Use load balancers as shock absorbers.
+
+## Create Back Pressure
+Every performance problem starts with a queue backing up somewhere. If a queue is unbounded, it can consume all available memory.As a queue’s length reaches toward infinity, response time also heads toward infinity. 
+
+If the queue is bounded, we have to decide what to do when it’s full and a producer tries to stuff one more thing into it.
+
+### Remember This
+- Back Pressure creates safety by slowing down consumers.
+- Apply Back Pressure within a system boundary
+- Queues must be finite for response times to be finite.
+
+## Governor
+By the time a human perceives the problem, it’s a question of recovery rather than intervention. We should use automation for things humans are bad at: repetitive tasks and fast response, but these automated tasks often are too fast.
+
+The whole point of a governor is to slow things down enough for humans to get involved.
+
+### Remember this
+- Slow things down to allow intervention.
+- Apply resistance in the unsafe direction.
+- Consider a response curve.
+
+---
+### Part 2: Design for production
+---

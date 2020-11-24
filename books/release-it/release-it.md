@@ -643,5 +643,19 @@ The whole point of a governor is to slow things down enough for humans to get in
 - Consider a response curve.
 
 ---
-### Part 2: Design for production
+## Part 2: Design for production
 ---
+## Chapter 6:
+
+## Recovery-Oriented Computing (ROC
+The ability to **restart components, instead of entire servers**, is a key concept of recovery-oriented computing. Its principles are:
+- Failures are inevitable.
+- Modeling and analysis can never be sufficiently complete. A priori prediction of all failure modes is not possible.
+- Human action is a major source of system failures.
+  
+Whereas most work focuses on eliminating the sources of failure, ROC accepts that failures will inevitably happen. Their investigations aim to improve survivability in the face of failures.
+
+## Chapter 7:
+## Foundations:
+---
+
